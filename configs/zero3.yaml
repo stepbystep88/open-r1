@@ -2,14 +2,15 @@ compute_environment: LOCAL_MACHINE
 debug: false
 deepspeed_config:
   deepspeed_multinode_launcher: standard
-  offload_optimizer_device: cpu    # 修改这里
-  offload_param_device: none        # 修改这里
+  offload_optimizer_device: cpu
+  offload_param_device: none
   zero3_init_flag: true
   zero3_save_16bit_model: true
   zero_stage: 3
 distributed_type: DEEPSPEED
 downcast_bf16: 'no'
 machine_rank: 0
+main_process_ip: "localhost"
 main_training_function: main
 mixed_precision: bf16
 num_machines: 1

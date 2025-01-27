@@ -69,7 +69,10 @@ def accuracy_reward(completions, solution, **kwargs):
                 extraction_mode="first_match",
             )
             # Reward 1 if the content is the same as the ground truth, 0 otherwise
-            reward = float(verify(answer_parsed, gold_parsed))
+            try:
+                reward = float(verify(answer_parsed, gold_parsed))
+            except:
+                reward = 1.0
         else:
             # If the gold solution is not parseable, we reward 1 to skip this example
             reward = 1.0
@@ -120,8 +123,8 @@ class StepLoggerCallback(TrainerCallback):
     def on_step_end(self, args, state, control, **kwargs):
         """在每个训练 step 结束时触发采样逻辑"""
         self.prof.step()
-
-        print(f"step{self.current_step} end!")
+        if torch.npu.current_device() == 0:
+            print(f"[rank0]: step{self.current_step} end!")
 
 
 def main(script_args, training_args, model_args):

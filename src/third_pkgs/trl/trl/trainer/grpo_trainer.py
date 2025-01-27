@@ -563,10 +563,12 @@ class GRPOTrainer(Trainer):
         # Generate completions
         prompts = [x["prompt"] for x in inputs]
         if self.use_vllm:
-            print(f"[rank{torch.npu.current_device()}], run _generate_vllm branch")
+            if torch.npu.current_device() == 0:
+                print(f"[rank{torch.npu.current_device()}], run _generate_vllm branch")
             prompt_ids, prompt_mask, completion_ids, completion_mask = self._generate_vllm(model, prompts)
         else:
-            print(f"[rank{torch.npu.current_device()}], run _generate branch")
+            if torch.npu.current_device() == 0:
+                print(f"[rank{torch.npu.current_device()}], run _generate branch")
             prompt_ids, prompt_mask, completion_ids, completion_mask = self._generate(model, prompts)
 
         prompt_length = prompt_ids.size(1)
