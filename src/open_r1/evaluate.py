@@ -13,7 +13,9 @@
 # limitations under the License.
 
 """Custom evaluation tasks for LightEval."""
-
+import torch
+import torch_npu
+from torch_npu.contrib import transfer_to_npu
 from lighteval.metrics.dynamic_metrics import (
     ExprExtractionConfig,
     LatexExtractionConfig,

@@ -53,7 +53,7 @@ _deps = [
     "huggingface-hub[cli]>=0.19.2,<1.0",
     "isort>=5.12.0",
     "liger_kernel==0.5.2",
-    "lighteval @ git+https://github.com/huggingface/lighteval.git@4f381b352c0e467b5870a97d41cb66b487a2c503#egg=lighteval[math]",
+    "lighteval @ git+https://gh-proxy.com/https://github.com/huggingface/lighteval.git@4f381b352c0e467b5870a97d41cb66b487a2c503#egg=lighteval[math]",
     "math-verify>=0.3.2",  # Used for math verification in grpo
     "packaging>=23.0",
     "parameterized>=0.9.0",
@@ -61,8 +61,8 @@ _deps = [
     "safetensors>=0.3.3",
     "sentencepiece>=0.1.99",
     "torch>=2.5.1",
-    "transformers @ git+https://github.com/huggingface/transformers.git@main",
-    "trl @ git+https://github.com/huggingface/trl.git@main",
+    "transformers @ git+https://gh-proxy.com/https://github.com/huggingface/transformers.git@main",
+    "trl @ git+https://gh-proxy.com/https://github.com/huggingface/trl.git@main",
     "vllm==0.6.6.post1",
     "wandb>=0.19.1",
 ]
@@ -114,7 +114,7 @@ setup(
     long_description_content_type="text/markdown",
     keywords="llm inference-time compute reasoning",
     license="Apache",
-    url="https://github.com/huggingface/open-r1",
+    url="https://gh-proxy.com/https://github.com/huggingface/open-r1",
     package_dir={"": "src"},
     packages=find_packages("src"),
     zip_safe=False,

@@ -13,13 +13,16 @@
 # limitations under the License.
 
 import re
+import torch
+import torch_npu
+from torch_npu.contrib import transfer_to_npu
+import init_python_path
 from dataclasses import dataclass, field
-
 from datasets import load_dataset
-
 from latex2sympy2_extended import NormalizationConfig
 from math_verify import LatexExtractionConfig, parse, verify
-from trl import GRPOConfig, GRPOTrainer, ModelConfig, ScriptArguments, TrlParser, get_peft_config
+from third_party.trl.trl import GRPOConfig, GRPOTrainer, ModelConfig, ScriptArguments, TrlParser, get_peft_config
+from transformers import Trainer, TrainerCallback, TrainingArguments
 
 
 @dataclass
@@ -73,6 +76,13 @@ def accuracy_reward(completions, solution, **kwargs):
             print("Failed to parse gold solution: ", sol)
         rewards.append(reward)
 
+    # info = dict(kwargs=kwargs,
+    #             completions=completions,
+    #             solution=solution,
+    #             rewards=rewards)
+
+    print(f"[rank{torch.npu.current_device()}]: rewards: {rewards}")
+
     return rewards
 
 
@@ -97,6 +107,23 @@ SYSTEM_PROMPT = (
 )
 
 
+class StepLoggerCallback(TrainerCallback):
+    def __init__(self, prof):
+        super().__init__()
+        self.current_step = 0
+        self.prof = prof
+
+    def on_step_begin(self, args, state, control, **kwargs):
+        """在每个训练 step 开始时记录 step 数"""
+        self.current_step = state.global_step
+
+    def on_step_end(self, args, state, control, **kwargs):
+        """在每个训练 step 结束时触发采样逻辑"""
+        self.prof.step()
+
+        print(f"step{self.current_step} end!")
+
+
 def main(script_args, training_args, model_args):
     # Get reward functions
     reward_funcs = [reward_funcs_registry[func] for func in script_args.reward_funcs]
@@ -116,6 +143,31 @@ def main(script_args, training_args, model_args):
     dataset = dataset.map(make_conversation)
     dataset = dataset.remove_columns("messages")
 
+    # Train and push the model to the Hub
+    experimental_config = torch_npu.profiler._ExperimentalConfig(
+        aic_metrics=torch_npu.profiler.AiCMetrics.PipeUtilization,
+        profiler_level=torch_npu.profiler.ProfilerLevel.Level0,
+        l2_cache=False,
+        data_simplification=False
+    )
+
+    prof = torch_npu.profiler.profile(
+        activities=[
+            torch_npu.profiler.ProfilerActivity.CPU,
+            torch_npu.profiler.ProfilerActivity.NPU
+        ],
+        on_trace_ready=torch_npu.profiler.tensorboard_trace_handler("profiling"),
+        record_shapes=True,
+        profile_memory=True,
+        with_stack=True,
+        with_flops=False,
+        with_modules=False,
+        schedule=torch_npu.profiler.schedule(wait=0, warmup=1, active=2, repeat=1, skip_first=100000),
+        experimental_config=experimental_config)
+    prof.start()
+
+    callback_fcn = StepLoggerCallback(prof)
+
     # Initialize the GRPO trainer
     trainer = GRPOTrainer(
         model=model_args.model_name_or_path,
@@ -124,10 +176,12 @@ def main(script_args, training_args, model_args):
         train_dataset=dataset[script_args.dataset_train_split],
         eval_dataset=dataset[script_args.dataset_test_split] if training_args.eval_strategy != "no" else None,
         peft_config=get_peft_config(model_args),
+        callbacks=[callback_fcn]  # 添加回调
     )
 
-    # Train and push the model to the Hub
     trainer.train()
+
+    prof.stop()
 
     # Save and push to hub
     trainer.save_model(training_args.output_dir)

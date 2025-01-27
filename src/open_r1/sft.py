@@ -35,10 +35,14 @@ accelerate launch --config_file=configs/zero3.yaml src/open_r1/sft.py \
     --output_dir data/Qwen2.5-1.5B-Open-R1-Distill
 """
 
+import torch
+import torch_npu
+from torch_npu.contrib import transfer_to_npu
+
 from datasets import load_dataset
 from transformers import AutoTokenizer
 
-from trl import (
+from third_party.trl import (
     ModelConfig,
     ScriptArguments,
     SFTConfig,
