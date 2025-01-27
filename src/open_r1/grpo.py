@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from datasets import load_dataset
 from latex2sympy2_extended import NormalizationConfig
 from math_verify import LatexExtractionConfig, parse, verify
-from third_party.trl.trl import GRPOConfig, GRPOTrainer, ModelConfig, ScriptArguments, TrlParser, get_peft_config
+from third_pkgs.trl.trl import GRPOConfig, GRPOTrainer, ModelConfig, ScriptArguments, TrlParser, get_peft_config
 from transformers import Trainer, TrainerCallback, TrainingArguments
 
 
