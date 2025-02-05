@@ -1251,6 +1251,7 @@ def prepare_deepspeed(
 
     deepspeed_plugin = AcceleratorState().deepspeed_plugin
     config_kwargs = deepspeed_plugin.deepspeed_config
+    config_kwargs["communication_data_type"] = "fp32"
     if config_kwargs["zero_optimization"]["stage"] != 3:
         config_kwargs["train_micro_batch_size_per_gpu"] = per_device_train_batch_size
         config_kwargs = {
