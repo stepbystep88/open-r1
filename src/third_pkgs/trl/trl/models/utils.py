@@ -137,6 +137,15 @@ def setup_chat_format(
 
 def remove_hooks(model: "DeepSpeedEngine") -> None:
     """Removes the optimizer hooks from a DeepSpeed ZeRO-3 model."""
+    # 添加安全检查
+    if not hasattr(model, 'optimizer'):
+        model.optimizer = None
+        return
+
+    optimizer = getattr(model, "optimizer", None)
+    if optimizer is None:
+        return
+
     if model.optimizer is not None and hasattr(model.optimizer, "parameter_offload"):
         optimizer_offload = model.optimizer.parameter_offload
     elif model.optimizer is not None:
@@ -200,8 +209,6 @@ def prepare_deepspeed(model, accelerator):
     # Adapted from accelerate: https://github.com/huggingface/accelerate/blob/739b135f8367becb67ffaada12fe76e3aa60fefd/src/accelerate/accelerator.py#L1473
     deepspeed_plugin = accelerator.state.deepspeed_plugin
     config_kwargs = deepcopy(deepspeed_plugin.deepspeed_config)
-    config_kwargs["communication_data_type"] = "fp32"
-
     stage = config_kwargs["zero_optimization"]["stage"]
 
     if model is not None:

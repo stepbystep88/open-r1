@@ -16,7 +16,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-import trl
+import third_pkgs.trl.trl as trl
 
 
 # TODO: add the shared options with a mixin to reduce code duplication

@@ -10,8 +10,8 @@ if [ -z "$MODEL_NAME_OR_PATH" ]; then
 fi
 
 export HF_ENDPOINT=https://hf-mirror.com
-old_config_yaml_file=configs/zero3.yaml
-config_yaml_file=configs/zero3_machine_${MASTER_ADDR}_${NODE_RANK}.yaml
+old_config_yaml_file=recipes/accelerate_configs/zero3.yaml
+config_yaml_file=recipes/accelerate_configs/zero3_machine_${MASTER_ADDR}_${NODE_RANK}.yaml
 
 cp $old_config_yaml_file  $config_yaml_file
 sed -i "s/num_machines: .*/num_machines: ${NNODES}/" $config_yaml_file
@@ -58,13 +58,13 @@ last_two_model_name=$(basename $(dirname $MODEL_NAME_OR_PATH))/$(basename $MODEL
 echo $last_two_model_name
 
 accelerate launch --config_file $config_yaml_file src/open_r1/grpo.py \
+    --config recipes/qwen/Qwen2.5-1.5B-Instruct/grpo/confg_full.yaml \
     --output_dir output/${last_two_model_name}-GRPO \
     --model_name_or_path $model_name_or_path \
     --dataset_name AI-MO/NuminaMath-TIR \
     --max_prompt_length 256 \
     --max_completion_length 512 \
-    --per_device_train_batch_size 1 \
+    --per_device_train_batch_size 2 \
     --gradient_accumulation_steps $single_batch_size \
     --logging_steps 1 \
-    --use_vllm False \
     --bf16
